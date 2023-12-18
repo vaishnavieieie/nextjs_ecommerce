@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// art ecommerce schema 
+// ->with multiple images for a product
+// ->with multiple categories for a product
+// ->admin can add products
+// ->admin can add categories
+// ->admin can manage orders
+// ->admin can manage users
+
+// model User{}
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  email     String    @unique
+  name      String?
+  password  String
+  role      Role      @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  // review relation
+  reviews   Reviews[]
+  // order relation
+  orders    Order[]
+  // product relation
+  products  Product[]
+
+  @@map("users")
+}
+
+// model Product{}
+enum Category {
+  ART
+  CRAFT
+  PAINTING
+  SCULPTURE
+  PHOTOGRAPHY
+  OTHER
+}
+
+model Product {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  name           String
+  description    String
+  price          Float
+  images         String[]
+  categories     Category[]
+  reviews        Reviews[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  // user relation
+  user           User             @relation(fields: [userId], references: [id])
+  userId         String           @db.ObjectId
+  // order relation
+  productInOrder ProductInOrder[]
+
+  @@map("products")
+}
+
+// Model Order{}
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  DELIVERED
+  CANCELLED
+}
+
+type OrderItem {
+  productId String
+  quantity  Int
+}
+
+model Order {
+  id        String           @id @default(auto()) @map("_id") @db.ObjectId
+  user      User             @relation(fields: [userId], references: [id])
+  userId    String           @db.ObjectId
+  //product relation many to many
+  // products    Product    @relation(fields:[productId], references: [id])
+  // productId   String[]       @db.ObjectId
+  products  ProductInOrder[]
+  status    OrderStatus      @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@map("orders")
+}
+
+// intermediate model for products in order
+model ProductInOrder {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  product   Product @relation(fields: [productId], references: [id])
+  productId String  @db.ObjectId
+  quantity  Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String  @db.ObjectId
+
+  @@map("productsInOrder")
+}
+
+// model transactions{}
+
+// model Reviews{}
+model Reviews {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String   @db.ObjectId
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
+}
