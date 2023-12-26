@@ -38,6 +38,8 @@ model User {
   orders    Order[]
   // product relation
   products  Product[]
+  // cart relation
+  cart      Cart[]
 
   @@map("users")
 }
@@ -58,6 +60,7 @@ model Product {
   description    String
   price          Float
   images         String[]
+  stock          Int
   categories     Category[]
   reviews        Reviews[]
   createdAt      DateTime         @default(now())
@@ -67,6 +70,8 @@ model Product {
   userId         String           @db.ObjectId
   // order relation
   productInOrder ProductInOrder[]
+  // cart relation
+  cart           Cart[]
 
   @@map("products")
 }
@@ -126,4 +131,20 @@ model Reviews {
   updatedAt DateTime @updatedAt
 
   @@map("reviews")
+}
+
+// cart
+// TODO sync DB
+// model Cart{}
+model Cart {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId //@map to map _id of mongoDB to id of prisma
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String   @db.ObjectId
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("cart")
 }
