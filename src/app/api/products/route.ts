@@ -1,15 +1,11 @@
 // prisma
+import { getAuthUser } from "@/app/lib/authUser";
 import { PrismaClient } from "@prisma/client";
-import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { authOptions } from "../auth/[...nextauth]/options";
 
 // route: GET /api/products
-export async function GET(req: NextApiRequest, res: NextApiResponse) {
+export async function GET(req: NextRequest, res: NextResponse) {
   try {
-    const session = await getServerSession(authOptions);
-    console.log(session);
     const prisma = new PrismaClient();
     const products = await prisma.product.findMany();
     return NextResponse.json(products, { status: 200 });
@@ -24,17 +20,14 @@ export async function GET(req: NextApiRequest, res: NextApiResponse) {
 
 // route: POST /api/products
 // protected route->user check
-export async function POST(req: any, res: NextApiResponse) {
+export async function POST(req: NextRequest, res: NextResponse) {
   try {
-    const session = await getServerSession(authOptions);
-    console.log(session);
+    const session = await getAuthUser(req, res);
     // check if user is admin
-    // TODO : check interface of session
     if (!session?.user || session?.user?.role !== "ADMIN") {
       console.log("Unauthorized");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     } else {
-      console.log("Authorized");
       const prisma = new PrismaClient();
       let data = await req.json();
       console.log("hello", data);
